@@ -1,1 +1,5 @@
 */.api_key
+input.txt
+output.txt
+outroot.txt
+*.tmp
