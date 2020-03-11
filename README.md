@@ -18,3 +18,9 @@ It is planned to use several different APIs and online databases. But currently,
   Note that the software works the better, the more artists and reasonable weighting factors you supply.
 * Run `python musicrecs.py`.
 * Recommendations for you are written into `output.txt` together with weighting factors. If you would like to know why certain artists are recommended to you, you can look into `outroot.txt` to find out.
+
+## Contribute
+
+Everyone can contribute to this project. Small stuff can be done at any time. I will name larger challenges under "Issues".
+
+Please look at [CONTRIBUTE.md](CONTRIBUTE.md) to see how and where you can contribute.
