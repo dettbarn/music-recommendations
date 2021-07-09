@@ -2,50 +2,50 @@ import json
 import requests
 import operator
 
-startup = {}
-startupscale = 1
-maxval = 0.
-with open('input.txt') as f:
-    for line in f:
-        (key, val) = line.split('%')
-        startup[key] = float(val)
-        if float(val) > maxval:
-            maxval = float(val)
+startupWeights = {}
+startupScale = 1
+maxWeight = 0.
+with open('input.txt') as inputFile:
+    for line in inputFile:
+        (artistName, weight) = line.split('%')
+        startupWeights[artistName] = float(weight)
+        if float(weight) > maxWeight:
+            maxWeight = float(weight)
 
-alls = {}
-root = {}
+artistRecommendations = {}
+artistRoots = {}
 
-for j in startup:
-    minmatch = 0.3
-    with open("./lastfm/.api_key") as apikeyfile:
-        apikey = (apikeyfile.readlines())[0]
-    file = ("http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar"
-            + "&artist=" + j + "&api_key=" + apikey + "&format=json")
+for artistName in startupWeights:
+    minMatch = 0.3
+    with open("./lastfm/.api_key") as apikeyFile:
+        apikey = (apikeyFile.readlines())[0]
+    similarsUrl = ("http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar"
+            + "&artist=" + artistName + "&api_key=" + apikey + "&format=json")
 
-    response = requests.get(file)
-    json_data = json.loads(response.content)
+    similarsResponse = requests.get(similarsUrl)
+    similarsData = json.loads(similarsResponse.content)
 
-    for i in json_data['similarartists']['artist']:
-        key = i['name']
-        match = i['match']
-        if float(match) < minmatch:
+    for similarArtist in similarsData['similarartists']['artist']:
+        similarArtistName = similarArtist['name']
+        match = similarArtist['match']
+        if float(match) < minMatch:
             continue
-        wgt = float(match) * startup[j] / maxval
-        if key in alls:
-            alls[key] += wgt
-            root[key] += (',' + j + '(' + str(wgt)
+        weight = float(match) * startupWeights[artistName] / maxWeight
+        if similarArtistName in artistRecommendations:
+            artistRecommendations[similarArtistName] += weight
+            artistRoots[similarArtistName] += (',' + artistName + '(' + str(weight)
                           + ')(match' + str(match) + ')')
         else:
-            alls[key] = wgt
-            root[key] = j + '(' + str(wgt) + ')(match' + str(match) + ')'
+            artistRecommendations[similarArtistName] = weight
+            artistRoots[similarArtistName] = artistName + '(' + str(weight) + ')(match' + str(match) + ')'
 
-outfile = open('output.txt', 'w')
-sortedall = sorted(alls.items(),
+artistRecommendationsFile = open('output.txt', 'w')
+sortedArtistRecommendations = sorted(artistRecommendations.items(),
                    key=operator.itemgetter(1), reverse=True)
-for item in sortedall:
-    print(item, file=outfile)
+for artistRecommendation in sortedArtistRecommendations:
+    print(artistRecommendation, file=artistRecommendationsFile)
 
-outrootfile = open('outroot.txt', 'w')
-for item in sorted(root.items(),
+artistRootsFile = open('outroot.txt', 'w')
+for artistRoot in sorted(artistRoots.items(),
                    key=operator.itemgetter(0), reverse=False):
-    print(item, file=outrootfile)
+    print(artistRoot, file=artistRootsFile)
