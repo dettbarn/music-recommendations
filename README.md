@@ -21,6 +21,5 @@ It is planned to use several different APIs and online databases. But currently,
 
 ## Contribute
 
-Everyone can contribute to this project. Small stuff can be done at any time. I will name larger challenges under "Issues".
+Everyone can contribute to this project. Take a look at [CONTRIBUTING.md](CONTRIBUTING.md) for more details. See also the "Issues" tab.
 
-Please look at [CONTRIBUTE.md](CONTRIBUTE.md) to see how and where you can contribute.
