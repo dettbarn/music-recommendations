@@ -1,22 +1,3 @@
-import json
-import requests
-import operator
-import sys
-import argparse
-
-
-class CLI:
-    def __init__(self):
-        self.parser = argparse.ArgumentParser(
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter, description="CLI Input", allow_abbrev=True, add_help=True)
-
-        self.parser.add_argument(
-            "-i", help="input data from command line", action="store_true")
-
-    def get_args(self):
-        return self.parser.parse_args()
-
-
 def multiline_input(prompt):
     print(prompt)
     lines = []
@@ -27,37 +8,33 @@ def multiline_input(prompt):
         else:
             break
     return lines
-
+from cli import CLI
+from parser import InputParser
+from recommender import Recommender
+from output import OutputGenerator
 
 if __name__ == "__main__":
-
-    startupWeights = {}
-    startupScale = 1
-    maxWeight = 0.
-
     cli = CLI().get_args()
     cli_input = cli.i
 
-    if(cli_input):
+    if cli_input:
         prompt = "Enter the data : \n"
-        inp = multiline_input(prompt)
-        for line in inp:
-            (artistName, weight) = line.split('%')
-            startupWeights[artistName] = float(weight)
-            if float(weight) > maxWeight:
-                maxWeight = float(weight)
+        inp = InputParser.parse_input_from_stdin(prompt)
     else:
-        with open('input.txt') as inputFile:
-            for line in inputFile:
-                (artistName, weight) = line.split('%')
-                startupWeights[artistName] = float(weight)
-                if float(weight) > maxWeight:
-                    maxWeight = float(weight)
+        inp = InputParser.parse_input_from_file('input.txt')
 
-    artistRecommendations = {}
-    artistRoots = {}
+    # Parse input into a dictionary
+    startup_weights = {}
+    for line in inp:
+        if '%' in line:
+            artist_name, weight = line.split('%')
+            startup_weights[artist_name] = float(weight)
 
-    for artistName in startupWeights:
+    recommender = Recommender(startup_weights)
+    recommender.calculate()
+
+    OutputGenerator.write_recommendations_to_file(recommender.artist_recommendations, 'output.txt')
+    OutputGenerator.write_roots_to_file(recommender.artist_roots, 'outroot.txt')
         minMatch = 0.3
         with open("./lastfm/.api_key") as apikeyFile:
             apikey = (apikeyFile.readlines())[0]
