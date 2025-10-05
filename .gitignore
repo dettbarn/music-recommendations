@@ -3,3 +3,5 @@ input.txt
 output.txt
 outroot.txt
 *.tmp
+__pycache__/
+*.pyc
