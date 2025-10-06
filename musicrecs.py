@@ -1,94 +1,60 @@
 import json
 import requests
 import operator
-import sys
-import argparse
+from cli import CLIHandler
+from input_parser import InputParser
+from output_generator import OutputGenerator
 
 
-class CLI:
-    def __init__(self):
-        self.parser = argparse.ArgumentParser(
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter, description="CLI Input", allow_abbrev=True, add_help=True)
+class MusicRecommender:
+    def __init__(self, startup_weights, max_weight):
+        self.startup_weights = startup_weights
+        self.max_weight = max_weight
+        self.artist_recommendations = {}
+        self.artist_roots = {}
 
-        self.parser.add_argument(
-            "-i", help="input data from command line", action="store_true")
+    def recommend(self):
+        min_match = 0.3
+        import os
+        if not os.path.exists("./lastfm/.api_key"):
+            print("[INFO] API key file not found. Skipping API calls. Returning empty recommendations for testing.")
+            return self.artist_recommendations, self.artist_roots
+        with open("./lastfm/.api_key") as apikeyFile:
+            apikey = (apikeyFile.readlines())[0]
+        for artist_name in self.startup_weights:
+            similars_url = (
+                "http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar"
+                + "&artist=" + artist_name + "&api_key=" + apikey + "&format=json"
+            )
+            similars_response = requests.get(similars_url)
+            similars_data = json.loads(similars_response.content)
+            for similar_artist in similars_data['similarartists']['artist']:
+                similar_artist_name = similar_artist['name']
+                match = similar_artist['match']
+                if float(match) < min_match:
+                    continue
+                weight = float(match) * self.startup_weights[artist_name] / self.max_weight
+                if similar_artist_name in self.artist_recommendations:
+                    self.artist_recommendations[similar_artist_name] += weight
+                    self.artist_roots[similar_artist_name] += (',' + artist_name + '(' + str(weight)
+                                                           + ')(match' + str(match) + ')')
+                else:
+                    self.artist_recommendations[similar_artist_name] = weight
+                    self.artist_roots[similar_artist_name] = artist_name + \
+                        '(' + str(weight) + ')(match' + str(match) + ')'
+        return self.artist_recommendations, self.artist_roots
 
-    def get_args(self):
-        return self.parser.parse_args()
-
-
-def multiline_input(prompt):
-    print(prompt)
-    lines = []
-    while True:
-        line = input()
-        if line:
-            lines.append(line.strip())
-        else:
-            break
-    return lines
 
 
 if __name__ == "__main__":
-
-    startupWeights = {}
-    startupScale = 1
-    maxWeight = 0.
-
-    cli = CLI().get_args()
-    cli_input = cli.i
-
-    if(cli_input):
-        prompt = "Enter the data : \n"
-        inp = multiline_input(prompt)
-        for line in inp:
-            (artistName, weight) = line.split('%')
-            startupWeights[artistName] = float(weight)
-            if float(weight) > maxWeight:
-                maxWeight = float(weight)
-    else:
-        with open('input.txt') as inputFile:
-            for line in inputFile:
-                (artistName, weight) = line.split('%')
-                startupWeights[artistName] = float(weight)
-                if float(weight) > maxWeight:
-                    maxWeight = float(weight)
-
-    artistRecommendations = {}
-    artistRoots = {}
-
-    for artistName in startupWeights:
-        minMatch = 0.3
-        with open("./lastfm/.api_key") as apikeyFile:
-            apikey = (apikeyFile.readlines())[0]
-        similarsUrl = ("http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar"
-                       + "&artist=" + artistName + "&api_key=" + apikey + "&format=json")
-
-        similarsResponse = requests.get(similarsUrl)
-        similarsData = json.loads(similarsResponse.content)
-
-        for similarArtist in similarsData['similarartists']['artist']:
-            similarArtistName = similarArtist['name']
-            match = similarArtist['match']
-            if float(match) < minMatch:
-                continue
-            weight = float(match) * startupWeights[artistName] / maxWeight
-            if similarArtistName in artistRecommendations:
-                artistRecommendations[similarArtistName] += weight
-                artistRoots[similarArtistName] += (',' + artistName + '(' + str(weight)
-                                                   + ')(match' + str(match) + ')')
-            else:
-                artistRecommendations[similarArtistName] = weight
-                artistRoots[similarArtistName] = artistName + \
-                    '(' + str(weight) + ')(match' + str(match) + ')'
-
-    artistRecommendationsFile = open('output.txt', 'w')
-    sortedArtistRecommendations = sorted(artistRecommendations.items(),
-                                         key=operator.itemgetter(1), reverse=True)
-    for artistRecommendation in sortedArtistRecommendations:
-        print(artistRecommendation, file=artistRecommendationsFile)
-
-    artistRootsFile = open('outroot.txt', 'w')
-    for artistRoot in sorted(artistRoots.items(),
-                             key=operator.itemgetter(0), reverse=False):
-        print(artistRoot, file=artistRootsFile)
+    cli_handler = CLIHandler()
+    args = cli_handler.get_args()
+    input_parser = InputParser(from_cli=args.i)
+    startup_weights, max_weight = input_parser.parse(cli_handler=cli_handler if args.i else None)
+    recommender = MusicRecommender(startup_weights, max_weight)
+    artist_recommendations, artist_roots = recommender.recommend()
+    output_gen = OutputGenerator()
+    sorted_artist_recommendations = sorted(artist_recommendations.items(), key=operator.itemgetter(1), reverse=True)
+    output_gen.write_recommendations(sorted_artist_recommendations, filename='output.txt')
+    sorted_artist_roots = sorted(artist_roots.items(), key=operator.itemgetter(0), reverse=False)
+    output_gen.write_roots(sorted_artist_roots, filename='outroot.txt')
