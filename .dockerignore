@@ -1,0 +1,41 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+CONTRIBUTING.md
+LICENSE
+
+# Output files (should be generated in container)
+input.txt
+output.txt
+outroot.txt
+*.tmp
+
+# API key (should be mounted as volume)
+lastfm/.api_key
+
+# Docker files
+Dockerfile
+.dockerignore
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# OS files
+.DS_Store
+Thumbs.db
