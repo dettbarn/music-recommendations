@@ -5,3 +5,4 @@ outroot.txt
 *.tmp
 __pycache__/
 *.pyc
+.idea/
