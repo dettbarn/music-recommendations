@@ -33,6 +33,8 @@ Note that the software works the better, the more artists and reasonable weighti
 
 In both cases, recommendations for you will be written into `output.txt` together with weighting factors. If you would like to know why certain artists are recommended to you, you can look into `outroot.txt` to find out.
 
+If you don't want to install Python and the needed extensions locally, you can use Docker. For more details see [DOCKER.md](DOCKER.md).
+
 ## Contribute
 
 Everyone can contribute to this project. Take a look at [CONTRIBUTING.md](CONTRIBUTING.md) for more details. See also the "Issues" tab.
