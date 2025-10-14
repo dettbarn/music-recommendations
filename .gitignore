@@ -1,5 +1,5 @@
-*/.api_key
-input.txt
+host-data/*/.api_key
+host-data/input.txt
 output.txt
 outroot.txt
 *.tmp
